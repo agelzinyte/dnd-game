@@ -119,13 +119,22 @@ def create_character() -> Character:
 def display_character(character: Character) -> None:
     """Display character information to the console.
 
-    Prints the character's name, race, all ability scores with modifiers,
+    Prints the character's name, race, level, XP, all ability scores with modifiers,
     current hit points, equipped weapon, and known spells.
 
     Args:
         character: The Character instance to display.
     """
     print(f"\n{character.name} the {character.race}")
+    print(f"Level {character.level}")
+
+    # Show XP progress
+    if character.level < 10:
+        xp_needed = character.get_xp_for_next_level()
+        print(f"XP: {character.xp}/{xp_needed} (Need {xp_needed - character.xp} more for level {character.level + 1})")
+    else:
+        print(f"XP: {character.xp} (Max Level)")
+
     print("\nStats:")
     # Generate stat lines using list comprehension with modifiers calculated once
     stat_lines = [
@@ -174,7 +183,9 @@ def start_combat(player: Character) -> bool:
         "WIS": 8,
         "CHA": 8,
     }
-    goblin = Enemy("Goblin", goblin_stats, hp=5, armor_class=10, weapon=WEAPONS["Shortsword"])
+    goblin = Enemy(
+        "Goblin", goblin_stats, hp=5, armor_class=10, weapon=WEAPONS["Shortsword"], xp_value=50
+    )
 
     print(f"\nA {goblin.name} appears!")
     combat = Combat(player, goblin)
@@ -258,6 +269,7 @@ def start_combat(player: Character) -> bool:
         # Check if goblin is defeated
         if not goblin.is_alive():
             print(f"You defeated the {goblin.name}!")
+            player.gain_xp(goblin.xp_value)
             return True
 
         # Goblin's turn (if still alive)

@@ -32,6 +32,34 @@ RACES: Dict[str, Dict[str, int]] = {
     },
 }
 
+# XP required for each level (D&D 5e progression)
+XP_TABLE: Dict[int, int] = {
+    1: 0,
+    2: 300,
+    3: 900,
+    4: 2700,
+    5: 6500,
+    6: 14000,
+    7: 23000,
+    8: 34000,
+    9: 48000,
+    10: 64000,
+}
+
+# Spell slots by character level
+SPELL_SLOTS_BY_LEVEL: Dict[int, Dict[int, int]] = {
+    1: {1: 2, 2: 0, 3: 0},
+    2: {1: 3, 2: 0, 3: 0},
+    3: {1: 4, 2: 2, 3: 0},
+    4: {1: 4, 2: 3, 3: 0},
+    5: {1: 4, 2: 3, 3: 2},
+    6: {1: 4, 2: 3, 3: 3},
+    7: {1: 4, 2: 3, 3: 3},
+    8: {1: 4, 2: 3, 3: 3},
+    9: {1: 4, 2: 3, 3: 3},
+    10: {1: 4, 2: 3, 3: 3},
+}
+
 
 class Entity:
     """Base class for all entities in the game (characters, enemies, etc.).
@@ -106,6 +134,7 @@ class Character(Entity):
         hp: Current hit points.
         max_hp: Maximum hit points.
         level: Character level (starts at 1).
+        xp: Current experience points.
         armor_class: Armor class value (defaults to 10).
         known_spells: List of spells the character knows.
         spell_slots: Dictionary mapping spell levels to available slots.
@@ -123,10 +152,11 @@ class Character(Entity):
         self.race: str = race
         self.base_hp: int = base_hp
         self.level: int = 1
+        self.xp: int = 0
         self.known_spells: List[Spell] = []
         # Spell slots for level 1 character (cantrips have unlimited uses)
-        self.max_spell_slots: Dict[int, int] = {1: 2, 2: 0, 3: 0}
-        self.spell_slots: Dict[int, int] = {1: 2, 2: 0, 3: 0}
+        self.max_spell_slots: Dict[int, int] = SPELL_SLOTS_BY_LEVEL[1].copy()
+        self.spell_slots: Dict[int, int] = SPELL_SLOTS_BY_LEVEL[1].copy()
         # Initialize Entity with empty stats - they'll be set by roll_stats()
         super().__init__(name, {}, 0)
 
@@ -222,6 +252,77 @@ class Character(Entity):
         """
         return [spell for spell in self.known_spells if self.can_cast_spell(spell)]
 
+    def get_xp_for_next_level(self) -> int:
+        """Get XP required for next level.
+
+        Returns:
+            XP needed to reach next level, or 0 if at max level.
+        """
+        if self.level >= 10:
+            return 0
+        return XP_TABLE[self.level + 1]
+
+    def gain_xp(self, amount: int) -> bool:
+        """Gain experience points and check for level up.
+
+        Args:
+            amount: Amount of XP to gain.
+
+        Returns:
+            True if character leveled up, False otherwise.
+        """
+        self.xp += amount
+        print(f"\n+{amount} XP! (Total: {self.xp} XP)")
+
+        # Check for level up (can level up multiple times)
+        leveled_up = False
+        while self.level < 10 and self.xp >= XP_TABLE[self.level + 1]:
+            self.level_up()
+            leveled_up = True
+        return leveled_up
+
+    def level_up(self) -> None:
+        """Level up the character, improving stats and abilities."""
+        old_level = self.level
+        self.level += 1
+
+        print(f"\n{'='*50}")
+        print(f"LEVEL UP! You are now level {self.level}!")
+        print(f"{'='*50}")
+
+        # Increase max HP (roll hit die + CON modifier)
+        hp_increase = roll(10, 1) + self.get_modifier("CON")
+        if hp_increase < 1:
+            hp_increase = 1
+        self.max_hp += hp_increase
+        self.hp = self.max_hp
+        print(f"Max HP increased by {hp_increase}! New max HP: {self.max_hp}")
+
+        # Update spell slots
+        self.max_spell_slots = SPELL_SLOTS_BY_LEVEL[self.level].copy()
+        self.spell_slots = SPELL_SLOTS_BY_LEVEL[self.level].copy()
+
+        # Show spell slot improvements
+        old_slots = SPELL_SLOTS_BY_LEVEL[old_level]
+        new_slots = SPELL_SLOTS_BY_LEVEL[self.level]
+        for spell_level in sorted(new_slots.keys()):
+            if new_slots[spell_level] > old_slots.get(spell_level, 0):
+                if old_slots.get(spell_level, 0) == 0:
+                    print(f"Gained Level {spell_level} spell slots: {new_slots[spell_level]}")
+                else:
+                    print(
+                        f"Level {spell_level} spell slots increased: {old_slots[spell_level]} -> {new_slots[spell_level]}"
+                    )
+
+        # Every 4 levels, increase a random stat by 1
+        if self.level % 4 == 0:
+            stats_list = list(self.stats.keys())
+            improved_stat = stats_list[roll(len(stats_list), 1) - 1]
+            self.stats[improved_stat] += 1
+            print(
+                f"Ability Score Improvement! {improved_stat} increased to {self.stats[improved_stat]}"
+            )
+
 
 class Enemy(Entity):
     """Represents an enemy entity in combat.
@@ -233,6 +334,7 @@ class Enemy(Entity):
         max_hp: Maximum hit points.
         armor_class: Armor class value.
         weapon: The enemy's equipped weapon.
+        xp_value: Experience points awarded for defeating this enemy.
     """
 
     def __init__(
@@ -242,6 +344,7 @@ class Enemy(Entity):
         hp: int,
         armor_class: int = 10,
         weapon: Optional[Weapon] = None,
+        xp_value: int = 50,
     ) -> None:
         """Initialize an Enemy instance.
 
@@ -251,5 +354,7 @@ class Enemy(Entity):
             hp: Maximum/starting hit points.
             armor_class: Armor class value (defaults to 10).
             weapon: The enemy's equipped weapon (defaults to None).
+            xp_value: XP awarded for defeating this enemy (defaults to 50).
         """
         super().__init__(name, stats, hp, armor_class, weapon)
+        self.xp_value: int = xp_value

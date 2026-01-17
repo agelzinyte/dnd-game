@@ -33,5 +33,5 @@
 # Optional Stretch Goals
 [+] Add different weapon types with different damage dice
 [+] Add simple spellcasting system
-[ ] Add an experience points and leveling system
+[+] Add an experience points and leveling system
 [ ] (Advanced) Create a DungeonMaster class which uses OpenAI's API to narrate the game (start simple with just narrating the comabt, extend it to narrate the choices and actions of the players)
