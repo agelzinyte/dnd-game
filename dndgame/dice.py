@@ -2,7 +2,16 @@ import random
 
 
 def roll(dice_type: int, number_of_dice: int) -> int:
-    """Roll dice and return sum."""
+    """
+    Roll a specified number of dice of a given type and return the total.
+
+    Args:
+        dice_type (int): The number of sides on the dice.
+        number_of_dice (int): The number of dice to roll.
+
+    Returns:
+        int: The total sum of the dice rolls.
+    """
     rolls = []
     total = 0
     for _ in range(number_of_dice):
@@ -14,14 +23,30 @@ def roll(dice_type: int, number_of_dice: int) -> int:
 
 
 def roll_with_advantage(dice_type: int) -> int:
-    """Roll with advantage (roll twice, take highest)."""
+    """
+    Roll a dice twice and return the higher result (advantage).
+
+    Args:
+        dice_type (int): The number of sides on the dice.
+
+    Returns:
+        int: The higher of the two rolls.
+    """
     roll1 = roll(dice_type, 1)
     roll2 = roll(dice_type, 1)
     return max(roll1, roll2)
 
 
 def roll_with_disadvantage(dice_type: int) -> int:
-    """Roll with disadvantage (roll twice, take lowest)."""
+    """
+    Roll a dice twice and return the lower result (disadvantage).
+
+    Args:
+        dice_type (int): The number of sides on the dice.
+
+    Returns:
+        int: The lower of the two rolls.
+    """
     roll1 = roll(dice_type, 1)
     roll2 = roll(dice_type, 1)
     return min(roll1, roll2)
