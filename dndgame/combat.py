@@ -1,5 +1,6 @@
 from typing import List
 
+from dndgame.character import Character
 from dndgame.dice import roll
 
 

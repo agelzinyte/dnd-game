@@ -2,6 +2,34 @@ from typing import Dict
 
 from dndgame.dice import roll
 
+# Race configuration registry
+# Each race maps to a dictionary of ability score bonuses
+RACES: Dict[str, Dict[str, int]] = {
+    "Human": {
+        "STR": 1,
+        "DEX": 1,
+        "CON": 1,
+        "INT": 1,
+        "WIS": 1,
+        "CHA": 1,
+    },
+    "Elf": {
+        "DEX": 2,
+    },
+    "Dwarf": {
+        "CON": 2,
+    },
+    "Halfling": {
+        "DEX": 2,
+        "CHA": 1,
+    },
+    "Orc": {
+        "STR": 2,
+        "CON": 1,
+        "INT": -1,
+    },
+}
+
 
 class Character:
     """Represents a D&D character with attributes, stats, and racial bonuses.
@@ -70,15 +98,12 @@ class Character:
     def apply_racial_bonuses(self) -> None:
         """Apply racial bonuses to ability scores based on character race.
 
-        Modifies the character's stats based on their race:
-        - Dwarf: +2 to Constitution
-        - Elf: +2 to Dexterity
-        - Human: +1 to all ability scores
+        Looks up the race in the RACES registry and applies the configured
+        bonuses to the character's stats. If the race is not found in the
+        registry, no bonuses are applied.
         """
-        if self.race == "Dwarf":
-            self.stats["CON"] += 2
-        elif self.race == "Elf":
-            self.stats["DEX"] += 2
-        elif self.race == "Human":
-            for stat in self.stats:
-                self.stats[stat] += 1
+        if self.race in RACES:
+            bonuses = RACES[self.race]
+            for stat, bonus in bonuses.items():
+                if stat in self.stats:
+                    self.stats[stat] += bonus

@@ -1,10 +1,10 @@
 # Refactoring
-[ ] Add comprehensive type hints and make mypy pass in strict mode (`mypy dndgame --strict`)
+[+] Add comprehensive type hints and make mypy pass in strict mode (`mypy dndgame --strict`)
     [ ] Add proper types for all class attributes
     [ ] Add return types and parameter types for all methods
     [ ] Fix any type-related issues mypy finds
 
-[ ] Add complete docstrings
+[+] Add complete docstrings
     [ ] Class docstrings explaining purpose and attributes
     [ ] Method docstrings with parameters and return types
     [ ] Add examples in docstrings where helpful

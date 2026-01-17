@@ -1,18 +1,42 @@
-from dndgame.character import Character
+from dndgame.character import RACES, Character
 from dndgame.dice import roll
 
 
-def create_character():
+def create_character() -> Character:
+    """Create a new character through user interaction.
+
+    Prompts the user to enter a character name and select a race, then
+    creates a Character instance with rolled stats and racial bonuses applied.
+
+    Returns:
+        A new Character instance with stats rolled and racial bonuses applied.
+    """
     print("Welcome to D&D Adventure!")
     name = input("Enter your character's name: ")
 
+    # Dynamically generate race menu from RACES registry
     print("\nChoose your race:")
-    print("1. Human (+1 to all stats)")
-    print("2. Elf (+2 DEX)")
-    print("3. Dwarf (+2 CON)")
-    race_choice = input("Enter choice (1-3): ")
+    race_list = list(RACES.keys())
+    for i, race_name in enumerate(race_list, start=1):
+        bonuses = RACES[race_name]
+        bonus_desc = ", ".join(
+            f"{'+' if bonus >= 0 else ''}{bonus} {stat}"
+            for stat, bonus in bonuses.items()
+        )
+        print(f"{i}. {race_name} ({bonus_desc})")
+
+    while True:
+        race_choice = input(f"Enter choice (1-{len(race_list)}): ")
+        try:
+            choice_num = int(race_choice)
+            if 1 <= choice_num <= len(race_list):
+                race = race_list[choice_num - 1]
+                break
+            else:
+                print(f"Please enter a number between 1 and {len(race_list)}.")
+        except ValueError:
+            print("Please enter a valid number.")
     print("\n")
-    race = ["Human", "Elf", "Dwarf"][int(race_choice) - 1]
 
     character = Character(name, race, 10)
     character.roll_stats()
@@ -20,7 +44,15 @@ def create_character():
     return character
 
 
-def display_character(character):
+def display_character(character: Character) -> None:
+    """Display character information to the console.
+
+    Prints the character's name, race, all ability scores with modifiers,
+    and current hit points.
+
+    Args:
+        character: The Character instance to display.
+    """
     print(f"\n{character.name} the {character.race}")
     print("\nStats:")
     for stat, value in character.stats.items():
@@ -29,7 +61,18 @@ def display_character(character):
     print(f"\nHP: {character.hp}")
 
 
-def simple_combat(player):
+def simple_combat(player: Character) -> bool:
+    """Run a simple combat encounter with a goblin.
+
+    Allows the player to attack a goblin or run away. Combat continues until
+    the goblin is defeated (reaches 0 HP) or the player runs away.
+
+    Args:
+        player: The player's Character instance.
+
+    Returns:
+        True if the goblin was defeated, False if the player ran away.
+    """
     print("\nA goblin appears!")
     goblin_hp = 5
 
@@ -55,7 +98,12 @@ def simple_combat(player):
     return True
 
 
-def main():
+def main() -> None:
+    """Main game loop for the D&D Adventure game.
+
+    Creates a character and presents a menu allowing the player to fight goblins,
+    view their character stats, or quit the game.
+    """
     player = create_character()
 
     while True:

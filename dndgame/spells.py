@@ -1,5 +1,6 @@
 # type: ignore
 from typing import Dict
+from dndgame.character import Character
 
 class Spell:
     def __init__(self, name: str, level: int, damage: int) -> None:
