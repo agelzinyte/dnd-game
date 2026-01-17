@@ -12,7 +12,11 @@ def create_character() -> Character:
         A new Character instance with stats rolled and racial bonuses applied.
     """
     print("Welcome to D&D Adventure!")
-    name = input("Enter your character's name: ")
+    while True:
+        name = input("Enter your character's name: ").strip()
+        if name:
+            break
+        print("Name cannot be empty. Please enter a valid name.")
 
     # Dynamically generate race menu from RACES registry
     print("\nChoose your race:")
@@ -83,7 +87,12 @@ def simple_combat(player: Character) -> bool:
         print("2. Run away")
         print()
 
-        choice = input("What do you do? ")
+        while True:
+            choice = input("What do you do? ").strip()
+            if choice in ("1", "2"):
+                break
+            print("Please enter 1 to attack or 2 to run away.")
+
         if choice == "1":
             attack = roll(20, 1)
             if attack >= 10:
@@ -112,7 +121,11 @@ def main() -> None:
         print("2. View character")
         print("3. Quit")
 
-        choice = input("Enter choice (1-3): ")
+        while True:
+            choice = input("Enter choice (1-3): ").strip()
+            if choice in ("1", "2", "3"):
+                break
+            print("Please enter 1, 2, or 3.")
 
         if choice == "1":
             victory = simple_combat(player)

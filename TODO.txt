@@ -9,9 +9,9 @@
     [ ] Method docstrings with parameters and return types
     [ ] Add examples in docstrings where helpful
 
-[ ] Code is not optimized for adding a new character race. Fix this, and add a new character.
+[+] Code is not optimized for adding a new character race. Fix this, and add a new character.
 
-[ ] Input validation for user input
+[+] Input validation for user input
 
 [ ] Improve OOP Structure:
     [ ] Create an Enemy class
