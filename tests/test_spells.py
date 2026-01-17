@@ -83,3 +83,54 @@ def test_spell_cast():
     damage = spell.cast(caster, target)
     assert damage == 8
     assert target.hp == initial_target_hp - 8
+
+
+def test_spell_string_representation_cantrip():
+    """Test string representation of a cantrip."""
+    spell = Spell("Fire Bolt", 0, "Evocation", 5)
+    assert str(spell) == "Fire Bolt (Cantrip, Evocation, Power: 5)"
+
+
+def test_spell_string_representation_leveled():
+    """Test string representation of a leveled spell."""
+    spell = Spell("Fireball", 3, "Evocation", 15)
+    assert str(spell) == "Fireball (Level 3, Evocation, Power: 15)"
+
+
+def test_spell_cast_negative_damage_clamped_to_zero():
+    """Test that negative damage is clamped to 0."""
+    from dndgame.character import Character
+
+    caster = Character("Wizard", "Human", 10)
+    # Very low INT and negative spell power
+    caster.stats = {"STR": 10, "DEX": 10, "CON": 10, "INT": 3, "WIS": 10, "CHA": 10}  # INT 3 = -4 modifier
+    caster.hp = 10
+    caster.max_hp = 10
+
+    target = Character("Target", "Human", 10)
+    target.stats = {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10}
+    target.hp = 10
+    target.max_hp = 10
+
+    # Spell with negative power that will result in overall negative damage
+    spell = Spell("Weak Spell", 1, "Test", -10)
+    initial_target_hp = target.hp
+
+    damage = spell.cast(caster, target)
+    
+    # Damage should be clamped to 0
+    assert damage == 0
+    assert target.hp == initial_target_hp  # Target HP shouldn't change
+
+
+def test_get_spellbook():
+    """Test getting the global spellbook."""
+    from dndgame.spells import get_spellbook, SPELLS
+
+    spellbook = get_spellbook()
+    
+    assert spellbook is SPELLS
+    assert isinstance(spellbook, dict)
+    assert len(spellbook) > 0
+    assert "Fireball" in spellbook
+    assert "Magic Missile" in spellbook

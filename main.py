@@ -2,6 +2,7 @@ from dndgame.character import RACES, Character, Enemy
 from dndgame.combat import Combat
 from dndgame.weapons import WEAPONS
 from dndgame.spells import SPELLS
+from dndgame.dungeon_master import DungeonMaster
 
 
 def create_character() -> Character:
@@ -161,7 +162,7 @@ def display_character(character: Character) -> None:
                 )
 
 
-def start_combat(player: Character) -> bool:
+def start_combat(player: Character, dm: DungeonMaster) -> bool:
     """Start a combat encounter with a goblin using the Combat class.
 
     Uses the Combat class to manage combat rounds. The goblin attacks the player
@@ -170,6 +171,7 @@ def start_combat(player: Character) -> bool:
 
     Args:
         player: The player's Character instance.
+        dm: The DungeonMaster instance for narration.
 
     Returns:
         True if the goblin was defeated, False if the player ran away or was defeated.
@@ -188,6 +190,12 @@ def start_combat(player: Character) -> bool:
     )
 
     print(f"\nA {goblin.name} appears!")
+
+    # DM narrates the combat start
+    narration = dm.narrate_combat_start(player.name, goblin.name)
+    if narration:
+        print(f"\n🎲 {narration}\n")
+
     combat = Combat(player, goblin)
     combat.roll_initiative()
 
@@ -198,7 +206,15 @@ def start_combat(player: Character) -> bool:
 
         # Player's turn
         print("\nYour turn!")
-        print("1. Attack with weapon")
+
+        # DM narrates player's turn
+        narration = dm.narrate_action_choice(
+            player.name, ["attack with your weapon", "cast a spell", "run away"]
+        )
+        if narration:
+            print(f"🎲 {narration}")
+
+        print("\n1. Attack with weapon")
         print("2. Cast spell")
         print("3. Run away")
         print()
@@ -220,6 +236,17 @@ def start_combat(player: Character) -> bool:
                 print(f"You hit the {goblin.name} for {damage} damage!")
             else:
                 print("You missed!")
+
+            # DM narrates the attack
+            narration = dm.narrate_attack(
+                player.name,
+                goblin.name,
+                player.weapon.name if player.weapon else "fists",
+                damage,
+                damage > 0,
+            )
+            if narration:
+                print(f"🎲 {narration}")
         elif choice == "2":
             # Cast spell
             available_spells = player.get_available_spells()
@@ -260,6 +287,13 @@ def start_combat(player: Character) -> bool:
                                 print(f"You cast {spell.name} and heal for {-damage} HP!")
                             else:
                                 print(f"You cast {spell.name}!")
+
+                            # DM narrates the spell
+                            narration = dm.narrate_spell_cast(
+                                player.name, goblin.name, spell.name, damage
+                            )
+                            if narration:
+                                print(f"🎲 {narration}")
                             break
                         else:
                             print(f"Please enter a number between 0 and {len(available_spells)}.")
@@ -269,6 +303,12 @@ def start_combat(player: Character) -> bool:
         # Check if goblin is defeated
         if not goblin.is_alive():
             print(f"You defeated the {goblin.name}!")
+
+            # DM narrates the victory
+            narration = dm.narrate_victory(player.name, goblin.name)
+            if narration:
+                print(f"🎲 {narration}")
+
             player.gain_xp(goblin.xp_value)
             return True
 
@@ -281,9 +321,26 @@ def start_combat(player: Character) -> bool:
             else:
                 print(f"The {goblin.name} missed!")
 
+            # DM narrates the goblin's attack
+            narration = dm.narrate_attack(
+                goblin.name,
+                player.name,
+                goblin.weapon.name if goblin.weapon else "claws",
+                damage,
+                damage > 0,
+            )
+            if narration:
+                print(f"🎲 {narration}")
+
             # Check if player is defeated
             if not player.is_alive():
                 print("\nYou have been defeated! Your HP reached 0.")
+
+                # DM narrates the defeat
+                narration = dm.narrate_defeat(player.name, goblin.name)
+                if narration:
+                    print(f"🎲 {narration}")
+
                 return False
 
         combat.round += 1
@@ -302,6 +359,19 @@ def main() -> None:
     """
     player = create_character()
 
+    # Ask if player wants DM narration
+    print("\nDo you want AI Dungeon Master narration? (Requires OpenAI API key)")
+    print("1. Yes, enable DM narration")
+    print("2. No, play without narration")
+
+    while True:
+        dm_choice = input("Enter choice (1-2): ").strip()
+        if dm_choice in ("1", "2"):
+            break
+        print("Please enter 1 or 2.")
+
+    dm = DungeonMaster(enabled=(dm_choice == "1"))
+
     while True:
         print("\nWhat would you like to do?")
         print("1. Fight a goblin")
@@ -316,7 +386,7 @@ def main() -> None:
             print("Please enter 1, 2, 3, or 4.")
 
         if choice == "1":
-            victory = start_combat(player)
+            victory = start_combat(player, dm)
             if victory:
                 print("Victory!")
             elif not player.is_alive():

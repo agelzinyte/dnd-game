@@ -25,13 +25,13 @@
     [+] Used map()/filter() where appropriate
 
 # Testing
-[ ] Add comprehensive unit tests (have a look at the test_dice.py file for inspiration)
-    [ ] Test the character class
-    [ ] Test the combat system
-    [ ] Achieve at least 90% test coverage
+[+] Add comprehensive unit tests (have a look at the test_dice.py file for inspiration)
+    [+] Test the character class
+    [+] Test the combat system
+    [+] Achieve at least 90% test coverage (100% excluding dungeon_master.py)
 
 # Optional Stretch Goals
 [+] Add different weapon types with different damage dice
 [+] Add simple spellcasting system
 [+] Add an experience points and leveling system
-[ ] (Advanced) Create a DungeonMaster class which uses OpenAI's API to narrate the game (start simple with just narrating the comabt, extend it to narrate the choices and actions of the players)
+[+] (Advanced) Create a DungeonMaster class which uses OpenAI's API to narrate the game (start simple with just narrating the comabt, extend it to narrate the choices and actions of the players)
