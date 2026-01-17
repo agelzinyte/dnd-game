@@ -31,7 +31,61 @@ RACES: Dict[str, Dict[str, int]] = {
 }
 
 
-class Character:
+class Entity:
+    """Base class for all entities in the game (characters, enemies, etc.).
+
+    Attributes:
+        name: The entity's name.
+        stats: Dictionary mapping ability score names to their values.
+        hp: Current hit points.
+        max_hp: Maximum hit points.
+        armor_class: Armor class value.
+    """
+
+    def __init__(
+        self, name: str, stats: Dict[str, int], hp: int, armor_class: int = 10
+    ) -> None:
+        """Initialize an Entity instance.
+
+        Args:
+            name: The entity's name.
+            stats: Dictionary mapping ability score names to their values.
+            hp: Maximum/starting hit points.
+            armor_class: Armor class value (defaults to 10).
+        """
+        self.name: str = name
+        self.stats: Dict[str, int] = stats
+        self.max_hp: int = hp
+        self.hp: int = hp
+        self.armor_class: int = armor_class
+
+    def get_modifier(self, stat: str) -> int:
+        """Calculate ability modifier for a given ability score.
+
+        The modifier is calculated as (ability_score - 10) // 2, following
+        standard D&D rules.
+
+        Args:
+            stat: The ability score name (e.g., "STR", "DEX", "CON").
+
+        Returns:
+            The ability modifier as an integer.
+
+        Raises:
+            KeyError: If the stat name is not in the stats dictionary.
+        """
+        return (self.stats[stat] - 10) // 2
+
+    def is_alive(self) -> bool:
+        """Check if the entity is still alive.
+
+        Returns:
+            True if HP is greater than 0, False otherwise.
+        """
+        return self.hp > 0
+
+
+class Character(Entity):
     """Represents a D&D character with attributes, stats, and racial bonuses.
 
     Attributes:
@@ -53,31 +107,11 @@ class Character:
             race: The character's race (e.g., "Dwarf", "Elf", "Human").
             base_hp: Base hit points before modifiers.
         """
-        self.name: str = name
         self.race: str = race
-        self.stats: Dict[str, int] = {}
         self.base_hp: int = base_hp
-        self.hp: int = 0
-        self.max_hp: int = 0
         self.level: int = 1
-        self.armor_class: int = 10
-
-    def get_modifier(self, stat: str) -> int:
-        """Calculate ability modifier for a given ability score.
-
-        The modifier is calculated as (ability_score - 10) // 2, following
-        standard D&D rules.
-
-        Args:
-            stat: The ability score name (e.g., "STR", "DEX", "CON").
-
-        Returns:
-            The ability modifier as an integer.
-
-        Raises:
-            KeyError: If the stat name is not in the stats dictionary.
-        """
-        return (self.stats[stat] - 10) // 2
+        # Initialize Entity with empty stats - they'll be set by roll_stats()
+        super().__init__(name, {}, 0)
 
     def roll_stats(self) -> None:
         """Roll ability scores and calculate hit points.
@@ -107,3 +141,32 @@ class Character:
             for stat, bonus in bonuses.items():
                 if stat in self.stats:
                     self.stats[stat] += bonus
+
+
+class Enemy(Entity):
+    """Represents an enemy entity in combat.
+
+    Attributes:
+        name: The enemy's name.
+        stats: Dictionary mapping ability score names to their values.
+        hp: Current hit points.
+        max_hp: Maximum hit points.
+        armor_class: Armor class value.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        stats: Dict[str, int],
+        hp: int,
+        armor_class: int = 10,
+    ) -> None:
+        """Initialize an Enemy instance.
+
+        Args:
+            name: The enemy's name.
+            stats: Dictionary mapping ability score names to their values.
+            hp: Maximum/starting hit points.
+            armor_class: Armor class value (defaults to 10).
+        """
+        super().__init__(name, stats, hp, armor_class)

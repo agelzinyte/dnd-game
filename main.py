@@ -1,5 +1,5 @@
-from dndgame.character import RACES, Character
-from dndgame.dice import roll
+from dndgame.character import RACES, Character, Enemy
+from dndgame.combat import Combat
 
 
 def create_character() -> Character:
@@ -65,23 +65,40 @@ def display_character(character: Character) -> None:
     print(f"\nHP: {character.hp}")
 
 
-def simple_combat(player: Character) -> bool:
-    """Run a simple combat encounter with a goblin.
+def start_combat(player: Character) -> bool:
+    """Start a combat encounter with a goblin using the Combat class.
 
-    Allows the player to attack a goblin or run away. Combat continues until
-    the goblin is defeated (reaches 0 HP) or the player runs away.
+    Uses the Combat class to manage combat rounds. The goblin attacks the player
+    each round. Combat continues until either the player or goblin reaches 0 HP,
+    or the player chooses to run away.
 
     Args:
         player: The player's Character instance.
 
     Returns:
-        True if the goblin was defeated, False if the player ran away.
+        True if the goblin was defeated, False if the player ran away or was defeated.
     """
-    print("\nA goblin appears!")
-    goblin_hp = 5
+    # Create goblin enemy with appropriate stats
+    goblin_stats = {
+        "STR": 8,
+        "DEX": 14,
+        "CON": 10,
+        "INT": 10,
+        "WIS": 8,
+        "CHA": 8,
+    }
+    goblin = Enemy("Goblin", goblin_stats, hp=5, armor_class=10)
 
-    while goblin_hp > 0:
-        print(f"\nGoblin HP: {goblin_hp}")
+    print(f"\nA {goblin.name} appears!")
+    combat = Combat(player, goblin)
+    combat.roll_initiative()
+
+    while player.is_alive() and goblin.is_alive():
+        print(f"\n--- Round {combat.round + 1} ---")
+        print(f"{player.name} HP: {player.hp}/{player.max_hp}")
+        print(f"{goblin.name} HP: {goblin.hp}/{goblin.max_hp}")
+
+        # Player's turn
         print("\nYour turn!")
         print("1. Attack")
         print("2. Run away")
@@ -93,17 +110,41 @@ def simple_combat(player: Character) -> bool:
                 break
             print("Please enter 1 to attack or 2 to run away.")
 
-        if choice == "1":
-            attack = roll(20, 1)
-            if attack >= 10:
-                damage = roll(4, 1)
-                goblin_hp -= damage
-                print(f"You hit for {damage} damage!")
-            else:
-                print("You missed!")
-        elif choice == "2":
+        if choice == "2":
+            print("You run away from the fight!")
             return False
 
+        # Player attacks
+        damage = combat.attack(player, goblin)
+        if damage > 0:
+            print(f"You hit the {goblin.name} for {damage} damage!")
+        else:
+            print("You missed!")
+
+        # Check if goblin is defeated
+        if not goblin.is_alive():
+            print(f"You defeated the {goblin.name}!")
+            return True
+
+        # Goblin's turn (if still alive)
+        if goblin.is_alive():
+            print(f"\n{goblin.name}'s turn!")
+            damage = combat.attack(goblin, player)
+            if damage > 0:
+                print(f"The {goblin.name} hits you for {damage} damage!")
+            else:
+                print(f"The {goblin.name} missed!")
+
+            # Check if player is defeated
+            if not player.is_alive():
+                print("\nYou have been defeated! Your HP reached 0.")
+                return False
+
+        combat.round += 1
+
+    # Should not reach here, but handle edge cases
+    if not player.is_alive():
+        return False
     return True
 
 
@@ -128,9 +169,12 @@ def main() -> None:
             print("Please enter 1, 2, or 3.")
 
         if choice == "1":
-            victory = simple_combat(player)
+            victory = start_combat(player)
             if victory:
-                print("You defeated the goblin!")
+                print("Victory!")
+            elif not player.is_alive():
+                print("You have been defeated!")
+                break
             else:
                 print("You ran away!")
         elif choice == "2":

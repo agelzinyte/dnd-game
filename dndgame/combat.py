@@ -1,29 +1,31 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
-from dndgame.character import Character
 from dndgame.dice import roll
+
+if TYPE_CHECKING:
+    from dndgame.character import Entity
 
 
 class Combat:
-    def __init__(self, player: "Character", enemy: "Character") -> None:
-        """
-        Initialize a combat instance.
+    """Manages combat encounters between entities."""
+
+    def __init__(self, player: "Entity", enemy: "Entity") -> None:
+        """Initialize a combat instance.
 
         Args:
-            player (Character): The player character.
-            enemy (Character): The enemy character.
+            player: The player entity.
+            enemy: The enemy entity.
         """
         self.player = player
         self.enemy = enemy
         self.round: int = 0
-        self.initiative_order: List["Character"] = []
+        self.initiative_order: List["Entity"] = []
 
-    def roll_initiative(self) -> List["Character"]:
-        """
-        Roll initiative to determine the combat order.
+    def roll_initiative(self) -> List["Entity"]:
+        """Roll initiative to determine the combat order.
 
         Returns:
-            List[Character]: The order of combatants based on initiative rolls.
+            List of entities in initiative order (highest first).
         """
         player_init = roll(20, 1) + self.player.get_modifier("DEX")
         enemy_init = roll(20, 1) + self.enemy.get_modifier("DEX")
@@ -35,21 +37,22 @@ class Combat:
 
         return self.initiative_order
 
-    def attack(self, attacker: "Character", defender: "Character") -> int:
-        """
-        Perform an attack from one character to another.
+    def attack(self, attacker: "Entity", defender: "Entity") -> int:
+        """Perform an attack from one entity to another.
 
         Args:
-            attacker (Character): The attacking character.
-            defender (Character): The defending character.
+            attacker: The attacking entity.
+            defender: The defending entity.
 
         Returns:
-            int: The damage dealt to the defender, or 0 if the attack misses.
+            The damage dealt to the defender, or 0 if the attack misses.
         """
         attack_roll = roll(20, 1) + attacker.get_modifier("STR")
         weapon_max_damage = 6
         if attack_roll >= defender.armor_class:
             damage = roll(weapon_max_damage, 1)
             defender.hp -= damage
+            if defender.hp < 0:
+                defender.hp = 0
             return damage
         return 0
