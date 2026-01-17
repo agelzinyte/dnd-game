@@ -1,5 +1,6 @@
 from dndgame.character import RACES, Character, Enemy
 from dndgame.combat import Combat
+from dndgame.weapons import WEAPONS
 
 
 def create_character() -> Character:
@@ -41,9 +42,33 @@ def create_character() -> Character:
             print("Please enter a valid number.")
     print("\n")
 
+    # Weapon selection
+    print("Choose your weapon:")
+    weapon_list = list(WEAPONS.keys())
+    weapon_menu_items = [
+        f"{i}. {WEAPONS[weapon_name]}"
+        for i, weapon_name in enumerate(weapon_list, start=1)
+    ]
+    print("\n".join(weapon_menu_items))
+
+    while True:
+        weapon_choice = input(f"Enter choice (1-{len(weapon_list)}): ")
+        try:
+            choice_num = int(weapon_choice)
+            if 1 <= choice_num <= len(weapon_list):
+                weapon_name = weapon_list[choice_num - 1]
+                weapon = WEAPONS[weapon_name]
+                break
+            else:
+                print(f"Please enter a number between 1 and {len(weapon_list)}.")
+        except ValueError:
+            print("Please enter a valid number.")
+    print("\n")
+
     character = Character(name, race, 10)
     character.roll_stats()
     character.apply_racial_bonuses()
+    character.weapon = weapon
     return character
 
 
@@ -51,7 +76,7 @@ def display_character(character: Character) -> None:
     """Display character information to the console.
 
     Prints the character's name, race, all ability scores with modifiers,
-    and current hit points.
+    current hit points, and equipped weapon.
 
     Args:
         character: The Character instance to display.
@@ -68,6 +93,7 @@ def display_character(character: Character) -> None:
     ]
     print("\n".join(stat_lines))
     print(f"\nHP: {character.hp}")
+    print(f"Weapon: {character.weapon}")
 
 
 def start_combat(player: Character) -> bool:
@@ -92,7 +118,7 @@ def start_combat(player: Character) -> bool:
         "WIS": 8,
         "CHA": 8,
     }
-    goblin = Enemy("Goblin", goblin_stats, hp=5, armor_class=10)
+    goblin = Enemy("Goblin", goblin_stats, hp=5, armor_class=10, weapon=WEAPONS["Shortsword"])
 
     print(f"\nA {goblin.name} appears!")
     combat = Combat(player, goblin)

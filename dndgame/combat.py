@@ -48,9 +48,13 @@ class Combat:
             The damage dealt to the defender, or 0 if the attack misses.
         """
         attack_roll = roll(20, 1) + attacker.get_modifier("STR")
-        weapon_max_damage = 6
         if attack_roll >= defender.armor_class:
-            damage = roll(weapon_max_damage, 1)
+            # Use attacker's weapon damage dice
+            if attacker.weapon:
+                damage = roll(attacker.weapon.damage_die, attacker.weapon.damage_dice_count)
+            else:
+                # Fallback to unarmed strike (1 damage)
+                damage = 1
             defender.hp -= damage
             if defender.hp < 0:
                 defender.hp = 0

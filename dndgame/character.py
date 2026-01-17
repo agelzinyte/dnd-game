@@ -1,6 +1,7 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from dndgame.dice import roll
+from dndgame.weapons import Weapon, WEAPONS
 
 # Race configuration registry
 # Each race maps to a dictionary of ability score bonuses
@@ -40,10 +41,16 @@ class Entity:
         hp: Current hit points.
         max_hp: Maximum hit points.
         armor_class: Armor class value.
+        weapon: The entity's equipped weapon.
     """
 
     def __init__(
-        self, name: str, stats: Dict[str, int], hp: int, armor_class: int = 10
+        self,
+        name: str,
+        stats: Dict[str, int],
+        hp: int,
+        armor_class: int = 10,
+        weapon: Optional[Weapon] = None,
     ) -> None:
         """Initialize an Entity instance.
 
@@ -52,12 +59,14 @@ class Entity:
             stats: Dictionary mapping ability score names to their values.
             hp: Maximum/starting hit points.
             armor_class: Armor class value (defaults to 10).
+            weapon: The entity's equipped weapon (defaults to None).
         """
         self.name: str = name
         self.stats: Dict[str, int] = stats
         self.max_hp: int = hp
         self.hp: int = hp
         self.armor_class: int = armor_class
+        self.weapon: Optional[Weapon] = weapon if weapon else WEAPONS["Club"]
 
     def get_modifier(self, stat: str) -> int:
         """Calculate ability modifier for a given ability score.
@@ -153,6 +162,7 @@ class Enemy(Entity):
         hp: Current hit points.
         max_hp: Maximum hit points.
         armor_class: Armor class value.
+        weapon: The enemy's equipped weapon.
     """
 
     def __init__(
@@ -161,6 +171,7 @@ class Enemy(Entity):
         stats: Dict[str, int],
         hp: int,
         armor_class: int = 10,
+        weapon: Optional[Weapon] = None,
     ) -> None:
         """Initialize an Enemy instance.
 
@@ -169,5 +180,6 @@ class Enemy(Entity):
             stats: Dictionary mapping ability score names to their values.
             hp: Maximum/starting hit points.
             armor_class: Armor class value (defaults to 10).
+            weapon: The enemy's equipped weapon (defaults to None).
         """
-        super().__init__(name, stats, hp, armor_class)
+        super().__init__(name, stats, hp, armor_class, weapon)

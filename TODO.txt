@@ -20,9 +20,9 @@
     [+] Replace simple_combat function with Combat class usage.
     [+] Ensure that the Goblin also attacks the player. What happens if the player has 0 HP?
 
-[ ] Convert loops to functional programming
-    [ ] Use list comprehensions where appropriate
-    [ ] Use map()/filter() where appropriate
+[+] Convert loops to functional programming
+    [+] Used list comprehensions where appropriate
+    [+] Used map()/filter() where appropriate
 
 # Testing
 [ ] Add comprehensive unit tests (have a look at the test_dice.py file for inspiration)
@@ -31,7 +31,7 @@
     [ ] Achieve at least 90% test coverage
 
 # Optional Stretch Goals
-[ ] Add different weapon types with different damage dice
+[+] Add different weapon types with different damage dice
 [ ] Add simple spellcasting system
 [ ] Add an experience points and leveling system
 [ ] (Advanced) Create a DungeonMaster class which uses OpenAI's API to narrate the game (start simple with just narrating the comabt, extend it to narrate the choices and actions of the players)
