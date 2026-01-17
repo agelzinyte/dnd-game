@@ -1,6 +1,7 @@
 from dndgame.character import RACES, Character, Enemy
 from dndgame.combat import Combat
 from dndgame.weapons import WEAPONS
+from dndgame.spells import SPELLS
 
 
 def create_character() -> Character:
@@ -69,6 +70,49 @@ def create_character() -> Character:
     character.roll_stats()
     character.apply_racial_bonuses()
     character.weapon = weapon
+
+    # Spell selection
+    print("Do you want to learn spells? (You can learn 3 spells)")
+    print("1. Yes, I want to be a spellcaster")
+    print("2. No, I'll stick to weapons")
+
+    while True:
+        spell_choice = input("Enter choice (1-2): ").strip()
+        if spell_choice in ("1", "2"):
+            break
+        print("Please enter 1 or 2.")
+
+    if spell_choice == "1":
+        print("\nChoose 3 spells to learn:")
+        spell_list = list(SPELLS.keys())
+        spell_menu_items = [
+            f"{i}. {SPELLS[spell_name]}"
+            for i, spell_name in enumerate(spell_list, 1)
+        ]
+        print("\n".join(spell_menu_items))
+
+        chosen_spells = []
+        while len(chosen_spells) < 3:
+            spell_idx_input = input(
+                f"Choose spell {len(chosen_spells) + 1} (1-{len(spell_list)}): "
+            )
+            try:
+                spell_idx = int(spell_idx_input)
+                if 1 <= spell_idx <= len(spell_list):
+                    spell_name = spell_list[spell_idx - 1]
+                    spell = SPELLS[spell_name]
+                    if spell in chosen_spells:
+                        print("You already chose that spell. Pick a different one.")
+                    else:
+                        chosen_spells.append(spell)
+                        character.add_spell(spell)
+                        print(f"Learned {spell.name}!")
+                else:
+                    print(f"Please enter a number between 1 and {len(spell_list)}.")
+            except ValueError:
+                print("Please enter a valid number.")
+
+    print("\n")
     return character
 
 
@@ -76,7 +120,7 @@ def display_character(character: Character) -> None:
     """Display character information to the console.
 
     Prints the character's name, race, all ability scores with modifiers,
-    current hit points, and equipped weapon.
+    current hit points, equipped weapon, and known spells.
 
     Args:
         character: The Character instance to display.
@@ -92,8 +136,20 @@ def display_character(character: Character) -> None:
         )
     ]
     print("\n".join(stat_lines))
-    print(f"\nHP: {character.hp}")
+    print(f"\nHP: {character.hp}/{character.max_hp}")
     print(f"Weapon: {character.weapon}")
+
+    if character.known_spells:
+        print("\nKnown Spells:")
+        for spell in character.known_spells:
+            level_str = "Cantrip" if spell.level == 0 else f"Level {spell.level}"
+            print(f"  - {spell.name} ({level_str})")
+        print("\nSpell Slots:")
+        for level in sorted(character.spell_slots.keys()):
+            if character.max_spell_slots[level] > 0:
+                print(
+                    f"  Level {level}: {character.spell_slots[level]}/{character.max_spell_slots[level]}"
+                )
 
 
 def start_combat(player: Character) -> bool:
@@ -131,26 +187,73 @@ def start_combat(player: Character) -> bool:
 
         # Player's turn
         print("\nYour turn!")
-        print("1. Attack")
-        print("2. Run away")
+        print("1. Attack with weapon")
+        print("2. Cast spell")
+        print("3. Run away")
         print()
 
         while True:
             choice = input("What do you do? ").strip()
-            if choice in ("1", "2"):
+            if choice in ("1", "2", "3"):
                 break
-            print("Please enter 1 to attack or 2 to run away.")
+            print("Please enter 1, 2, or 3.")
 
-        if choice == "2":
+        if choice == "3":
             print("You run away from the fight!")
             return False
 
-        # Player attacks
-        damage = combat.attack(player, goblin)
-        if damage > 0:
-            print(f"You hit the {goblin.name} for {damage} damage!")
-        else:
-            print("You missed!")
+        if choice == "1":
+            # Player attacks with weapon
+            damage = combat.attack(player, goblin)
+            if damage > 0:
+                print(f"You hit the {goblin.name} for {damage} damage!")
+            else:
+                print("You missed!")
+        elif choice == "2":
+            # Cast spell
+            available_spells = player.get_available_spells()
+            if not available_spells:
+                print("You have no spells available to cast!")
+                print("Using weapon attack instead...")
+                damage = combat.attack(player, goblin)
+                if damage > 0:
+                    print(f"You hit the {goblin.name} for {damage} damage!")
+                else:
+                    print("You missed!")
+            else:
+                print("\nAvailable spells:")
+                for i, spell in enumerate(available_spells, 1):
+                    slots_info = ""
+                    if spell.level > 0:
+                        slots_info = f" (Slots: {player.spell_slots[spell.level]}/{player.max_spell_slots[spell.level]})"
+                    print(f"{i}. {spell.name} - Level {spell.level}{slots_info}")
+
+                while True:
+                    spell_choice = input(f"Choose spell (1-{len(available_spells)}) or 0 to cancel: ").strip()
+                    try:
+                        spell_idx = int(spell_choice)
+                        if spell_idx == 0:
+                            # Use weapon attack instead
+                            damage = combat.attack(player, goblin)
+                            if damage > 0:
+                                print(f"You hit the {goblin.name} for {damage} damage!")
+                            else:
+                                print("You missed!")
+                            break
+                        if 1 <= spell_idx <= len(available_spells):
+                            spell = available_spells[spell_idx - 1]
+                            damage = player.cast_spell(spell, goblin)
+                            if damage > 0:
+                                print(f"You cast {spell.name} and deal {damage} damage!")
+                            elif damage < 0:
+                                print(f"You cast {spell.name} and heal for {-damage} HP!")
+                            else:
+                                print(f"You cast {spell.name}!")
+                            break
+                        else:
+                            print(f"Please enter a number between 0 and {len(available_spells)}.")
+                    except ValueError:
+                        print("Please enter a valid number.")
 
         # Check if goblin is defeated
         if not goblin.is_alive():
@@ -191,13 +294,14 @@ def main() -> None:
         print("\nWhat would you like to do?")
         print("1. Fight a goblin")
         print("2. View character")
-        print("3. Quit")
+        print("3. Rest (restore HP and spell slots)")
+        print("4. Quit")
 
         while True:
-            choice = input("Enter choice (1-3): ").strip()
-            if choice in ("1", "2", "3"):
+            choice = input("Enter choice (1-4): ").strip()
+            if choice in ("1", "2", "3", "4"):
                 break
-            print("Please enter 1, 2, or 3.")
+            print("Please enter 1, 2, 3, or 4.")
 
         if choice == "1":
             victory = start_combat(player)
@@ -211,6 +315,12 @@ def main() -> None:
         elif choice == "2":
             display_character(player)
         elif choice == "3":
+            player.rest()
+            print("You take a rest and feel refreshed!")
+            print(f"HP restored to {player.hp}/{player.max_hp}")
+            if player.known_spells:
+                print("All spell slots restored!")
+        elif choice == "4":
             break
 
 

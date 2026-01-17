@@ -61,8 +61,25 @@ def test_empty_spellbook_available_spells():
 
 
 def test_spell_cast():
-    """Test spell cast method (currently a placeholder)."""
-    spell = Spell("Test Spell", 1, "Test", 1)
-    # Since cast() is currently a placeholder that does nothing,
-    # we just verify it can be called without raising an exception
-    spell.cast(None, None)
+    """Test spell cast method."""
+    from dndgame.character import Character
+
+    # Create a simple caster and target
+    caster = Character("Wizard", "Human", 10)
+    caster.stats = {"STR": 10, "DEX": 10, "CON": 10, "INT": 16, "WIS": 10, "CHA": 10}
+    caster.hp = 10
+    caster.max_hp = 10
+
+    target = Character("Target", "Human", 10)
+    target.stats = {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10}
+    target.hp = 10
+    target.max_hp = 10
+
+    spell = Spell("Test Spell", 1, "Test", 5)
+    initial_target_hp = target.hp
+
+    # Cast spell - should deal spell_power + INT modifier damage
+    # INT 16 = +3 modifier, so damage should be 5 + 3 = 8
+    damage = spell.cast(caster, target)
+    assert damage == 8
+    assert target.hp == initial_target_hp - 8

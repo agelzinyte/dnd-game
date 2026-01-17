@@ -1,7 +1,8 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from dndgame.dice import roll
 from dndgame.weapons import Weapon, WEAPONS
+from dndgame.spells import Spell
 
 # Race configuration registry
 # Each race maps to a dictionary of ability score bonuses
@@ -106,6 +107,9 @@ class Character(Entity):
         max_hp: Maximum hit points.
         level: Character level (starts at 1).
         armor_class: Armor class value (defaults to 10).
+        known_spells: List of spells the character knows.
+        spell_slots: Dictionary mapping spell levels to available slots.
+        max_spell_slots: Dictionary mapping spell levels to maximum slots.
     """
 
     def __init__(self, name: str, race: str, base_hp: int) -> None:
@@ -119,6 +123,10 @@ class Character(Entity):
         self.race: str = race
         self.base_hp: int = base_hp
         self.level: int = 1
+        self.known_spells: List[Spell] = []
+        # Spell slots for level 1 character (cantrips have unlimited uses)
+        self.max_spell_slots: Dict[int, int] = {1: 2, 2: 0, 3: 0}
+        self.spell_slots: Dict[int, int] = {1: 2, 2: 0, 3: 0}
         # Initialize Entity with empty stats - they'll be set by roll_stats()
         super().__init__(name, {}, 0)
 
@@ -151,6 +159,68 @@ class Character(Entity):
             self.stats = {
                 stat: self.stats[stat] + bonuses.get(stat, 0) for stat in self.stats
             }
+
+    def add_spell(self, spell: Spell) -> None:
+        """Add a spell to the character's known spells.
+
+        Args:
+            spell: The spell to add to known spells.
+        """
+        if spell not in self.known_spells:
+            self.known_spells.append(spell)
+
+    def can_cast_spell(self, spell: Spell) -> bool:
+        """Check if the character can cast a given spell.
+
+        Args:
+            spell: The spell to check.
+
+        Returns:
+            True if the spell can be cast (in known spells and has slots available).
+        """
+        if spell not in self.known_spells:
+            return False
+        # Cantrips (level 0) can always be cast
+        if spell.level == 0:
+            return True
+        # Check if spell slots are available
+        return self.spell_slots.get(spell.level, 0) > 0
+
+    def cast_spell(self, spell: Spell, target: "Entity") -> int:
+        """Cast a spell on a target.
+
+        Args:
+            spell: The spell to cast.
+            target: The target entity.
+
+        Returns:
+            The damage dealt (or negative for healing).
+
+        Raises:
+            ValueError: If the spell cannot be cast.
+        """
+        if not self.can_cast_spell(spell):
+            raise ValueError(f"Cannot cast {spell.name}")
+
+        # Use a spell slot (unless it's a cantrip)
+        if spell.level > 0:
+            self.spell_slots[spell.level] -= 1
+
+        # Cast the spell
+        return spell.cast(self, target)
+
+    def rest(self) -> None:
+        """Take a rest to restore spell slots and HP."""
+        self.spell_slots = self.max_spell_slots.copy()
+        self.hp = self.max_hp
+
+    def get_available_spells(self) -> List[Spell]:
+        """Get list of spells that can currently be cast.
+
+        Returns:
+            List of castable spells.
+        """
+        return [spell for spell in self.known_spells if self.can_cast_spell(spell)]
 
 
 class Enemy(Entity):
