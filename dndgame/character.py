@@ -121,10 +121,10 @@ class Character(Entity):
         plus the Constitution modifier, and sets current hp to max_hp.
         """
         print("Rolling stats...\n")
-        stats = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
-        for stat in stats:
-            print(f"Rolling {stat}...")
-            self.stats[stat] = roll(6, 3)
+        stats_list = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
+        # Print rolling messages and create stats dict using comprehension
+        [print(f"Rolling {stat}...") for stat in stats_list]
+        self.stats = {stat: roll(6, 3) for stat in stats_list}
 
         self.max_hp = self.base_hp + self.get_modifier("CON")
         self.hp = self.max_hp
@@ -138,9 +138,10 @@ class Character(Entity):
         """
         if self.race in RACES:
             bonuses = RACES[self.race]
-            for stat, bonus in bonuses.items():
-                if stat in self.stats:
-                    self.stats[stat] += bonus
+            # Apply bonuses only to existing stats using dict comprehension
+            self.stats = {
+                stat: self.stats[stat] + bonuses.get(stat, 0) for stat in self.stats
+            }
 
 
 class Enemy(Entity):

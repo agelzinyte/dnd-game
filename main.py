@@ -21,13 +21,12 @@ def create_character() -> Character:
     # Dynamically generate race menu from RACES registry
     print("\nChoose your race:")
     race_list = list(RACES.keys())
-    for i, race_name in enumerate(race_list, start=1):
-        bonuses = RACES[race_name]
-        bonus_desc = ", ".join(
-            f"{'+' if bonus >= 0 else ''}{bonus} {stat}"
-            for stat, bonus in bonuses.items()
-        )
-        print(f"{i}. {race_name} ({bonus_desc})")
+    # Generate menu items using list comprehension and print them
+    menu_items = [
+        f"{i}. {race_name} ({', '.join(('+' if bonus >= 0 else '') + str(bonus) + ' ' + stat for stat, bonus in RACES[race_name].items())})"
+        for i, race_name in enumerate(race_list, start=1)
+    ]
+    print("\n".join(menu_items))
 
     while True:
         race_choice = input(f"Enter choice (1-{len(race_list)}): ")
@@ -59,9 +58,15 @@ def display_character(character: Character) -> None:
     """
     print(f"\n{character.name} the {character.race}")
     print("\nStats:")
-    for stat, value in character.stats.items():
-        modifier = character.get_modifier(stat)
-        print(f"{stat}: {value} ({'+' if modifier >= 0 else ''}{modifier})")
+    # Generate stat lines using list comprehension with modifiers calculated once
+    stat_lines = [
+        f"{stat}: {value} ({'+' if modifier >= 0 else ''}{modifier})"
+        for stat, value, modifier in (
+            (stat, value, character.get_modifier(stat))
+            for stat, value in character.stats.items()
+        )
+    ]
+    print("\n".join(stat_lines))
     print(f"\nHP: {character.hp}")
 
 
